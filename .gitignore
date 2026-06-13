@@ -1,0 +1,25 @@
+# === BI MAT - tuyet doi khong len git ===
+secrets.json
+
+# === Du lieu sinh trac hoc ca nhan (mat nguoi dung) ===
+data/
+
+# === Anh nhan tu Telegram ===
+inbox/
+
+# === Nhat ky ===
+*.log
+
+# === Moi truong Python ===
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# === Ghi chu ca nhan (chua thong tin rieng: ten, chat_id, ten bot...) ===
+CLAUDE.md
+HUONG_DAN_SU_DUNG.txt
+
+# === Linh tinh ===
+_probe.py
+*.tmp

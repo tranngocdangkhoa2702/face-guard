@@ -1,0 +1,59 @@
+{
+    "camera_index": 0,
+
+    "_comment_telegram": "Token bot + chat_id da CHUYEN sang file rieng secrets.json (khong commit len git). Sua token/chat_id o do, dung de o day.",
+
+    "_comment_absence": "Máy im lặng (không gõ phím/đụng chuột) bao nhiêu giây thì bật cam kiểm tra xem bạn còn ngồi đó không. Không thấy ai -> khóa.",
+    "absence_lock_seconds": 60,
+
+    "_comment_idle_gap": "Im lặng ít nhất bao nhiêu giây rồi MỚI có người dùng máy thì bị coi là 'đáng ngờ' -> bật cam kiểm tra ai đang ngồi.",
+    "idle_gap_seconds": 15,
+
+    "_comment_verify": "Mỗi lần kiểm tra, cam bật tối đa bao nhiêu giây để nhìn mặt rồi tắt ngay.",
+    "verify_seconds": 8,
+
+    "_comment_recheck": "Khi bạn ngồi im xem phim/đọc (không gõ gì), bao lâu bật cam kiểm lại một lần.",
+    "idle_recheck_seconds": 60,
+
+    "_comment_active_recheck": "Khi máy ĐANG ĐƯỢC DÙNG liên tục, bao lâu bật cam xác nhận lại 1 lần (chặn người lạ ngồi vào ngay sau khi bạn rời đi). 300 = 5 phút. Đặt 0 để tắt.",
+    "active_recheck_seconds": 300,
+
+    "_comment_trust_grace": "Vừa soi cam xác nhận LÀ BẠN xong thì trong bấy nhiêu giây tiếp theo, đụng chuột/phím sẽ KHÔNG bị soi lại (đỡ bật cam thừa). Người lạ lẻn vào đúng khe này vẫn bị lưới active_recheck_seconds tóm.",
+    "trust_after_verify_seconds": 75,
+
+    "_comment_stranger": "Số lần liên tiếp thấy MẶT LẠ trong lúc kiểm tra thì kết luận là người lạ.",
+    "stranger_strikes_to_lock": 3,
+
+    "_comment_threshold": "Ngưỡng giống nhau (SFace cosine): CÀNG CAO càng giống bạn. TRÊN ngưỡng = đúng người. Khoảng 0.30-0.45. TĂNG nếu nhận người lạ thành bạn; GIẢM nếu hay khóa nhầm chính bạn.",
+    "match_threshold": 0.36,
+
+    "_comment_detect_score": "Ngưỡng tin cậy khi DÒ ra một khuôn mặt (YuNet), 0-1. Cao = chắc chắn mới tính là mặt. Tối quá không thấy mặt thì code tự hạ tạm xuống 0.6.",
+    "detect_score_threshold": 0.8,
+
+    "_comment_interval": "Số giây giữa mỗi lần kiểm tra bàn phím/chuột (rất nhẹ, không dùng cam).",
+    "check_interval_seconds": 1.0,
+
+    "_comment_cooldown": "Sau khi mở khóa lại, chờ bao nhiêu giây rồi mới bắt đầu canh tiếp.",
+    "resume_cooldown_seconds": 10,
+
+    "_comment_owner_present": "true = nếu thấy cả bạn lẫn người lạ trong khung hình thì KHÔNG khóa (bạn đang ngồi cùng đồng nghiệp/bạn bè).",
+    "skip_lock_if_owner_present": true,
+
+    "_comment_auto_learn": "true = chỉ CHỦ CHÍNH tự học thêm mặt theo thời gian (cắt tóc, gầy/béo dần vẫn nhận ra). Người tin cậy khác KHÔNG tự học.",
+    "auto_learn": true,
+
+    "_comment_auto_learn_sim": "Chỉ học mẫu mới khi độ giống (cosine) TRÊN mức này — cao hơn hẳn match_threshold để chắc chắn là bạn, tránh học nhầm.",
+    "auto_learn_min_similarity": 0.55,
+
+    "_comment_auto_learn_gap": "Tối thiểu bao nhiêu PHÚT giữa 2 lần học mẫu mới.",
+    "auto_learn_min_gap_minutes": 30,
+
+    "_comment_auto_learn_cap": "Giữ tối đa bao nhiêu mẫu (dấu vân tay số) tự học cho chủ chính; đầy thì bỏ mẫu cũ nhất. Mẫu lúc đăng ký không bị xóa.",
+    "auto_learn_max_samples": 50,
+
+    "_comment_liveness": "Chống ảnh giả: true = trong lúc soi, mặt phải NHÚC NHÍCH tự nhiên. Ảnh in/màn hình giơ lên đứng im -> nghi giả, không mở khóa.",
+    "liveness_enabled": true,
+
+    "_comment_liveness_motion": "Mức chuyển động tối thiểu của mặt (pixel) trong lúc soi để coi là người thật. Thấp = dễ dãi (ít khóa nhầm); cao = chặt. Mặc định nhẹ nhàng.",
+    "liveness_min_motion": 1.5
+}
