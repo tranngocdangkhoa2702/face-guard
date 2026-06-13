@@ -14,8 +14,10 @@ Lệnh (chỉ nghe từ đúng chat_id của chủ máy, người khác nhắn -
 import ctypes
 import datetime
 import os
+import queue
 import subprocess
 import sys
+import threading
 import time
 
 import cv2
@@ -98,25 +100,53 @@ class Bot:
         self.api = f"https://api.telegram.org/bot{cfg['telegram_token']}"
         self.chat_id = cfg["telegram_chat_id"]
         self.offset = 0
+        # Dùng LẠI kết nối HTTPS thay vì bắt tay TLS mới mỗi lần -> nhanh hơn, ít timeout.
+        # Hai session tách biệt: long-poll giữ kết nối 50s nên cho gửi tin một làn riêng,
+        # khỏi tranh chấp với nhau giữa 2 luồng.
+        self.poll_session = requests.Session()  # vòng lặp nhận lệnh (long-poll)
+        self.send_session = requests.Session()  # luồng gửi tin/ảnh
+        # Gửi tin ở LUỒNG NỀN: 1 tin bị lag mạng không làm kẹt việc nhận lệnh kế tiếp.
+        self.outbox = queue.Queue()
+        threading.Thread(target=self._sender_loop, daemon=True).start()
 
     def send(self, text):
+        # Không gửi ngay tại đây -> đẩy vào hàng đợi, luồng nền lo gửi (vòng lặp chính
+        # không phải chờ mạng). Trả về tức thì.
+        self.outbox.put(("text", text, None))
+
+    def send_photo(self, jpg_bytes, caption=""):
+        self.outbox.put(("photo", caption, jpg_bytes))
+
+    def _sender_loop(self):
+        """Luồng nền: lần lượt lấy tin từ hàng đợi và gửi (giữ đúng thứ tự)."""
+        while True:
+            kind, text, jpg = self.outbox.get()
+            try:
+                if kind == "photo":
+                    self._do_send_photo(jpg, text)
+                else:
+                    self._do_send(text)
+            except Exception as e:  # 1 tin lỗi không được làm chết luồng gửi
+                log(f"LOI luong gui tin: {e}")
+
+    def _do_send(self, text):
         # Mạng chập chờn -> thử lại tối đa 3 lần, đừng để chủ máy chờ trong im lặng
         for attempt in range(3):
             try:
-                requests.post(f"{self.api}/sendMessage",
-                              data={"chat_id": self.chat_id, "text": text}, timeout=20)
+                self.send_session.post(f"{self.api}/sendMessage",
+                                       data={"chat_id": self.chat_id, "text": text}, timeout=20)
                 return
             except requests.RequestException as e:
                 log(f"LOI gui tin (lan {attempt + 1}/3): {e}")
                 time.sleep(3)
 
-    def send_photo(self, jpg_bytes, caption=""):
+    def _do_send_photo(self, jpg_bytes, caption=""):
         for attempt in range(3):
             try:
-                requests.post(f"{self.api}/sendPhoto",
-                              data={"chat_id": self.chat_id, "caption": caption},
-                              files={"photo": ("camera.jpg", jpg_bytes, "image/jpeg")},
-                              timeout=30)
+                self.send_session.post(f"{self.api}/sendPhoto",
+                                       data={"chat_id": self.chat_id, "caption": caption},
+                                       files={"photo": ("camera.jpg", jpg_bytes, "image/jpeg")},
+                                       timeout=30)
                 return
             except requests.RequestException as e:
                 log(f"LOI gui anh (lan {attempt + 1}/3): {e}")
@@ -135,8 +165,8 @@ class Bot:
             {"command": "start_guard", "description": "Bật lại canh gác"},
         ]
         try:
-            requests.post(f"{self.api}/setMyCommands",
-                          json={"commands": commands}, timeout=20)
+            self.poll_session.post(f"{self.api}/setMyCommands",
+                                   json={"commands": commands}, timeout=20)
             log("Da dang ky menu lenh '/' voi Telegram.")
         except requests.RequestException as e:
             log(f"LOI dang ky menu lenh (khong sao, bot van chay): {e}")
@@ -145,11 +175,11 @@ class Bot:
         """Chủ máy gửi/forward ảnh vào bot -> tải về thư mục inbox\\ trên máy."""
         try:
             file_id = msg["photo"][-1]["file_id"]  # phần tử cuối = bản nét nhất
-            r = requests.get(f"{self.api}/getFile",
-                             params={"file_id": file_id}, timeout=20)
+            r = self.poll_session.get(f"{self.api}/getFile",
+                                      params={"file_id": file_id}, timeout=20)
             path = r.json()["result"]["file_path"]
             token = self.cfg["telegram_token"]
-            data = requests.get(
+            data = self.poll_session.get(
                 f"https://api.telegram.org/file/bot{token}/{path}", timeout=30
             ).content
             os.makedirs(INBOX_DIR, exist_ok=True)
@@ -274,9 +304,9 @@ class Bot:
         self.send("🤖 Bot canh gác đã sẵn sàng! Gõ /status xem tình hình.")
         while True:
             try:
-                r = requests.get(f"{self.api}/getUpdates",
-                                 params={"offset": self.offset, "timeout": 50},
-                                 timeout=60)
+                r = self.poll_session.get(f"{self.api}/getUpdates",
+                                          params={"offset": self.offset, "timeout": 50},
+                                          timeout=60)
                 for upd in r.json().get("result", []):
                     self.offset = upd["update_id"] + 1
                     msg = upd.get("message") or {}
