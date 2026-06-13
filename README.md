@@ -8,6 +8,9 @@ webcam. Camera **chỉ bật khi cần** (vài giây mỗi lần kiểm tra) nê
 > The camera only turns on for a few seconds when a check is needed. Controlled via a
 > Telegram bot. Vietnamese UI.*
 
+> 📖 **Người mới?** Xem [**HƯỚNG DẪN SỬ DỤNG CHI TIẾT từng bước**](HUONG_DAN_CHI_TIET.md)
+> — cài đặt, đăng ký mặt, bot Telegram, tinh chỉnh và xử lý sự cố, giải thích cặn kẽ.
+
 ## ✨ Tính năng
 
 - **Nhận diện khuôn mặt AI** bằng YuNet (dò mặt) + SFace (so khớp) — chạy trên CPU, mượt.
